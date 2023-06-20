@@ -108,22 +108,22 @@ class _DataChannelSampleState extends State<DataChannelSample> {
 
     _signaling?.onSignalingStateChange = (SignalingState state) {
       switch (state) {
-        case SignalingState.ConnectionClosed:
-        case SignalingState.ConnectionError:
-        case SignalingState.ConnectionOpen:
+        case SignalingState.connectionClosed:
+        case SignalingState.connectionError:
+        case SignalingState.connectionOpen:
           break;
       }
     };
 
     _signaling?.onCallStateChange = (Session session, CallState state) async {
       switch (state) {
-        case CallState.CallStateNew:
+        case CallState.callStateNew:
           setState(() {
             _session = session;
           });
           _timer = Timer.periodic(const Duration(seconds: 1), _handleDataChannelTest);
           break;
-        case CallState.CallStateBye:
+        case CallState.callStateBye:
           if (_waitAccept) {
             print('peer reject');
             _waitAccept = false;
@@ -138,11 +138,11 @@ class _DataChannelSampleState extends State<DataChannelSample> {
           _session = null;
           _text = '';
           break;
-        case CallState.CallStateInvite:
+        case CallState.callStateInvite:
           _waitAccept = true;
           _showInvateDialog();
           break;
-        case CallState.CallStateConnected:
+        case CallState.callStateConnected:
           if (_waitAccept) {
             _waitAccept = false;
             Navigator.of(context).pop(false);
@@ -151,7 +151,7 @@ class _DataChannelSampleState extends State<DataChannelSample> {
             _inCalling = true;
           });
           break;
-        case CallState.CallStateRinging:
+        case CallState.callStateRinging:
           bool? accept = await _showAcceptDialog();
           if (accept!) {
             _accept();
