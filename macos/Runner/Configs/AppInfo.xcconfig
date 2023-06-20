@@ -8,7 +8,7 @@
 PRODUCT_NAME = flutter_webrtc_demo
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = com.example.flutterWebrtcDemo
+PRODUCT_BUNDLE_IDENTIFIER = com.algorithmgeneration.flutterWebrtcDemo
 
 // The copyright displayed in application information
-PRODUCT_COPYRIGHT = Copyright © 2019 com.example. All rights reserved.
+PRODUCT_COPYRIGHT = Copyright © 2023 com.algorithmgeneration. All rights reserved.

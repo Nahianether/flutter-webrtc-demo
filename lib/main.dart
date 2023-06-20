@@ -7,11 +7,13 @@ import 'src/call_sample/call_sample.dart';
 import 'src/call_sample/data_channel_sample.dart';
 import 'src/route_item.dart';
 
-void main() => runApp(new MyApp());
+void main() => runApp(const MyApp());
 
 class MyApp extends StatefulWidget {
+  const MyApp({super.key});
+
   @override
-  _MyAppState createState() => new _MyAppState();
+  _MyAppState createState() => _MyAppState();
 }
 
 enum DialogDemoAction {
@@ -33,30 +35,34 @@ class _MyAppState extends State<MyApp> {
   }
 
   _buildRow(context, item) {
-    return ListBody(children: <Widget>[
-      ListTile(
-        title: Text(item.title),
-        onTap: () => item.push(context),
-        trailing: Icon(Icons.arrow_right),
-      ),
-      Divider()
-    ]);
+    return ListBody(
+      children: [
+        ListTile(
+          title: Text(item.title),
+          onTap: () => item.push(context),
+          trailing: const Icon(Icons.arrow_right),
+        ),
+        const Divider()
+      ],
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       home: Scaffold(
-          appBar: AppBar(
-            title: Text('Flutter-WebRTC example'),
-          ),
-          body: ListView.builder(
-              shrinkWrap: true,
-              padding: const EdgeInsets.all(0.0),
-              itemCount: items.length,
-              itemBuilder: (context, i) {
-                return _buildRow(context, items[i]);
-              })),
+        appBar: AppBar(
+          title: const Text('Flutter-WebRTC example'),
+        ),
+        body: ListView.builder(
+          shrinkWrap: true,
+          padding: const EdgeInsets.all(0.0),
+          itemCount: items.length,
+          itemBuilder: (context, i) {
+            return _buildRow(context, items[i]);
+          },
+        ),
+      ),
     );
   }
 
@@ -67,8 +73,7 @@ class _MyAppState extends State<MyApp> {
     });
   }
 
-  void showDemoDialog<T>(
-      {required BuildContext context, required Widget child}) {
+  void showDemoDialog<T>({required BuildContext context, required Widget child}) {
     showDialog<T>(
       context: context,
       builder: (BuildContext context) => child,
@@ -80,9 +85,8 @@ class _MyAppState extends State<MyApp> {
           Navigator.push(
               context,
               MaterialPageRoute(
-                  builder: (BuildContext context) => _datachannel
-                      ? DataChannelSample(host: _server)
-                      : CallSample(host: _server)));
+                  builder: (BuildContext context) =>
+                      _datachannel ? DataChannelSample(host: _server) : CallSample(host: _server)));
         }
       }
     });

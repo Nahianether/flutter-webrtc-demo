@@ -1,13 +1,15 @@
-import 'package:flutter/material.dart';
 import 'dart:core';
+
+import 'package:flutter/material.dart';
+import 'package:flutter_webrtc/flutter_webrtc.dart';
+
 import '../widgets/screen_select_dialog.dart';
 import 'signaling.dart';
-import 'package:flutter_webrtc/flutter_webrtc.dart';
 
 class CallSample extends StatefulWidget {
   static String tag = 'call_sample';
   final String host;
-  CallSample({required this.host});
+  const CallSample({super.key, required this.host});
 
   @override
   _CallSampleState createState() => _CallSampleState();
@@ -17,11 +19,11 @@ class _CallSampleState extends State<CallSample> {
   Signaling? _signaling;
   List<dynamic> _peers = [];
   String? _selfId;
-  RTCVideoRenderer _localRenderer = RTCVideoRenderer();
-  RTCVideoRenderer _remoteRenderer = RTCVideoRenderer();
+  final RTCVideoRenderer _localRenderer = RTCVideoRenderer();
+  final RTCVideoRenderer _remoteRenderer = RTCVideoRenderer();
   bool _inCalling = false;
   Session? _session;
-  DesktopCapturerSource? selected_source_;
+  DesktopCapturerSource? selectedSource;
   bool _waitAccept = false;
 
   // ignore: unused_element
@@ -103,7 +105,6 @@ class _CallSampleState extends State<CallSample> {
           });
 
           break;
-        case CallState.CallStateRinging:
       }
     };
 
@@ -134,18 +135,18 @@ class _CallSampleState extends State<CallSample> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text("title"),
-          content: Text("accept?"),
+          title: const Text('title'),
+          content: const Text('accept?'),
           actions: <Widget>[
             MaterialButton(
-              child: Text(
+              child: const Text(
                 'Reject',
                 style: TextStyle(color: Colors.red),
               ),
               onPressed: () => Navigator.of(context).pop(false),
             ),
             MaterialButton(
-              child: Text(
+              child: const Text(
                 'Accept',
                 style: TextStyle(color: Colors.green),
               ),
@@ -162,11 +163,11 @@ class _CallSampleState extends State<CallSample> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text("title"),
-          content: Text("waiting"),
+          title: const Text('title'),
+          content: const Text('waiting'),
           actions: <Widget>[
             TextButton(
-              child: Text("cancel"),
+              child: const Text('cancel'),
               onPressed: () {
                 Navigator.of(context).pop(false);
                 _hangUp();
@@ -215,16 +216,14 @@ class _CallSampleState extends State<CallSample> {
       );
       if (source != null) {
         try {
-          var stream =
-              await navigator.mediaDevices.getDisplayMedia(<String, dynamic>{
+          var stream = await navigator.mediaDevices.getDisplayMedia(<String, dynamic>{
             'video': {
               'deviceId': {'exact': source.id},
               'mandatory': {'frameRate': 30.0}
             }
           });
           stream.getVideoTracks()[0].onEnded = () {
-            print(
-                'By adding a listener on onEnded you can: 1) catch stop video sharing on Web');
+            print('By adding a listener on onEnded you can: 1) catch stop video sharing on Web');
           };
           screenStream = stream;
         } catch (e) {
@@ -232,8 +231,7 @@ class _CallSampleState extends State<CallSample> {
         }
       }
     } else if (WebRTC.platformIsWeb) {
-      screenStream =
-          await navigator.mediaDevices.getDisplayMedia(<String, dynamic>{
+      screenStream = await navigator.mediaDevices.getDisplayMedia(<String, dynamic>{
         'audio': false,
         'video': true,
       });
@@ -249,31 +247,26 @@ class _CallSampleState extends State<CallSample> {
     var self = (peer['id'] == _selfId);
     return ListBody(children: <Widget>[
       ListTile(
-        title: Text(self
-            ? peer['name'] + ', ID: ${peer['id']} ' + ' [Your self]'
-            : peer['name'] + ', ID: ${peer['id']} '),
+        title:
+            Text(self ? peer['name'] + ', ID: ${peer['id']} ' + ' [Your self]' : peer['name'] + ', ID: ${peer['id']} '),
         onTap: null,
         trailing: SizedBox(
             width: 100.0,
-            child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: <Widget>[
-                  IconButton(
-                    icon: Icon(self ? Icons.close : Icons.videocam,
-                        color: self ? Colors.grey : Colors.black),
-                    onPressed: () => _invitePeer(context, peer['id'], false),
-                    tooltip: 'Video calling',
-                  ),
-                  IconButton(
-                    icon: Icon(self ? Icons.close : Icons.screen_share,
-                        color: self ? Colors.grey : Colors.black),
-                    onPressed: () => _invitePeer(context, peer['id'], true),
-                    tooltip: 'Screen sharing',
-                  )
-                ])),
-        subtitle: Text('[' + peer['user_agent'] + ']'),
+            child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: <Widget>[
+              IconButton(
+                icon: Icon(self ? Icons.close : Icons.videocam, color: self ? Colors.grey : Colors.black),
+                onPressed: () => _invitePeer(context, peer['id'], false),
+                tooltip: 'Video calling',
+              ),
+              IconButton(
+                icon: Icon(self ? Icons.close : Icons.screen_share, color: self ? Colors.grey : Colors.black),
+                onPressed: () => _invitePeer(context, peer['id'], true),
+                tooltip: 'Screen sharing',
+              )
+            ])),
+        subtitle: Text('${'[' + peer['user_agent']}]'),
       ),
-      Divider()
+      const Divider()
     ]);
   }
 
@@ -281,11 +274,10 @@ class _CallSampleState extends State<CallSample> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('P2P Call Sample' +
-            (_selfId != null ? ' [Your ID ($_selfId)] ' : '')),
-        actions: <Widget>[
+        title: Text('P2P Call Sample${_selfId != null ? ' [Your ID ($_selfId)] ' : ''}'),
+        actions: const <Widget>[
           IconButton(
-            icon: const Icon(Icons.settings),
+            icon: Icon(Icons.settings),
             onPressed: null,
             tooltip: 'setup',
           ),
@@ -295,31 +287,29 @@ class _CallSampleState extends State<CallSample> {
       floatingActionButton: _inCalling
           ? SizedBox(
               width: 240.0,
-              child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: <Widget>[
-                    FloatingActionButton(
-                      child: const Icon(Icons.switch_camera),
-                      tooltip: 'Camera',
-                      onPressed: _switchCamera,
-                    ),
-                    FloatingActionButton(
-                      child: const Icon(Icons.desktop_mac),
-                      tooltip: 'Screen Sharing',
-                      onPressed: () => selectScreenSourceDialog(context),
-                    ),
-                    FloatingActionButton(
-                      onPressed: _hangUp,
-                      tooltip: 'Hangup',
-                      child: Icon(Icons.call_end),
-                      backgroundColor: Colors.pink,
-                    ),
-                    FloatingActionButton(
-                      child: const Icon(Icons.mic_off),
-                      tooltip: 'Mute Mic',
-                      onPressed: _muteMic,
-                    )
-                  ]))
+              child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: <Widget>[
+                FloatingActionButton(
+                  tooltip: 'Camera',
+                  onPressed: _switchCamera,
+                  child: const Icon(Icons.switch_camera),
+                ),
+                FloatingActionButton(
+                  tooltip: 'Screen Sharing',
+                  onPressed: () => selectScreenSourceDialog(context),
+                  child: const Icon(Icons.desktop_mac),
+                ),
+                FloatingActionButton(
+                  onPressed: _hangUp,
+                  tooltip: 'Hangup',
+                  backgroundColor: Colors.pink,
+                  child: const Icon(Icons.call_end),
+                ),
+                FloatingActionButton(
+                  tooltip: 'Mute Mic',
+                  onPressed: _muteMic,
+                  child: const Icon(Icons.mic_off),
+                )
+              ]))
           : null,
       body: _inCalling
           ? OrientationBuilder(builder: (context, orientation) {
@@ -331,21 +321,20 @@ class _CallSampleState extends State<CallSample> {
                       top: 0.0,
                       bottom: 0.0,
                       child: Container(
-                        margin: EdgeInsets.fromLTRB(0.0, 0.0, 0.0, 0.0),
+                        margin: const EdgeInsets.fromLTRB(0.0, 0.0, 0.0, 0.0),
                         width: MediaQuery.of(context).size.width,
                         height: MediaQuery.of(context).size.height,
+                        decoration: const BoxDecoration(color: Colors.black54),
                         child: RTCVideoView(_remoteRenderer),
-                        decoration: BoxDecoration(color: Colors.black54),
                       )),
                   Positioned(
                     left: 20.0,
                     top: 20.0,
                     child: Container(
                       width: orientation == Orientation.portrait ? 90.0 : 120.0,
-                      height:
-                          orientation == Orientation.portrait ? 120.0 : 90.0,
+                      height: orientation == Orientation.portrait ? 120.0 : 90.0,
+                      decoration: const BoxDecoration(color: Colors.black54),
                       child: RTCVideoView(_localRenderer, mirror: true),
-                      decoration: BoxDecoration(color: Colors.black54),
                     ),
                   ),
                 ]),
@@ -354,10 +343,11 @@ class _CallSampleState extends State<CallSample> {
           : ListView.builder(
               shrinkWrap: true,
               padding: const EdgeInsets.all(0.0),
-              itemCount: (_peers != null ? _peers.length : 0),
+              itemCount: _peers.length,
               itemBuilder: (context, i) {
                 return _buildRow(context, _peers[i]);
-              }),
+              },
+            ),
     );
   }
 }
