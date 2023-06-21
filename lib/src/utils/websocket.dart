@@ -3,9 +3,11 @@ import 'dart:math';
 import 'dart:convert';
 import 'dart:async';
 
+import 'package:flutter/material.dart';
+
 class SimpleWebSocket {
   final String _url;
-  var _socket;
+  WebSocket? _socket;
   Function()? onOpen;
   Function(dynamic msg)? onMessage;
   Function(int? code, String? reaso)? onClose;
@@ -16,10 +18,10 @@ class SimpleWebSocket {
       //_socket = await WebSocket.connect(_url);
       _socket = await _connectForSelfSignedCert(_url);
       onOpen?.call();
-      _socket.listen((data) {
+      _socket!.listen((data) {
         onMessage?.call(data);
       }, onDone: () {
-        onClose?.call(_socket.closeCode, _socket.closeReason);
+        onClose?.call(_socket!.closeCode, _socket!.closeReason);
       });
     } catch (e) {
       onClose?.call(500, e.toString());
@@ -27,14 +29,13 @@ class SimpleWebSocket {
   }
 
   send(data) {
-    if (_socket != null) {
-      _socket.add(data);
-      print('send: $data');
-    }
+    if (_socket == null) return;
+    _socket!.add(data);
+    debugPrint('send: $data');
   }
 
   close() {
-    if (_socket != null) _socket.close();
+    if (_socket != null) _socket!.close();
   }
 
   Future<WebSocket> _connectForSelfSignedCert(url) async {
@@ -42,19 +43,15 @@ class SimpleWebSocket {
       Random r = Random();
       String key = base64.encode(List<int>.generate(8, (_) => r.nextInt(255)));
       HttpClient client = HttpClient(context: SecurityContext());
-      client.badCertificateCallback =
-          (X509Certificate cert, String host, int port) {
-        print(
-            'SimpleWebSocket: Allow self-signed certificate => $host:$port. ');
+      client.badCertificateCallback = (X509Certificate cert, String host, int port) {
+        debugPrint('SimpleWebSocket: Allow self-signed certificate => $host:$port. ');
         return true;
       };
 
-      HttpClientRequest request =
-          await client.getUrl(Uri.parse(url)); // form the correct url here
+      HttpClientRequest request = await client.getUrl(Uri.parse(url)); // form the correct url here
       request.headers.add('Connection', 'Upgrade');
       request.headers.add('Upgrade', 'websocket');
-      request.headers.add(
-          'Sec-WebSocket-Version', '13'); // insert the correct version here
+      request.headers.add('Sec-WebSocket-Version', '13'); // insert the correct version here
       request.headers.add('Sec-WebSocket-Key', key.toLowerCase());
 
       HttpClientResponse response = await request.close();

@@ -45,7 +45,7 @@ class _ThumbnailWidgetState extends State<ThumbnailWidget> {
           decoration: widget.selected ? BoxDecoration(border: Border.all(width: 2, color: Colors.blueAccent)) : null,
           child: InkWell(
             onTap: () {
-              print('Selected source id => ${widget.source.id}');
+              debugPrint('Selected source id => ${widget.source.id}');
               widget.onTap(widget.source);
             },
             child: widget.source.thumbnail != null
@@ -114,7 +114,7 @@ class ScreenSelectDialog extends Dialog {
     try {
       var sources = await desktopCapturer.getSources(types: [_sourceType]);
       for (var element in sources) {
-        print('name: ${element.name}, id: ${element.id}, type: ${element.type}');
+        debugPrint('name: ${element.name}, id: ${element.id}, type: ${element.type}');
       }
       _timer?.cancel();
       _timer = Timer.periodic(const Duration(seconds: 3), (timer) {
@@ -127,7 +127,7 @@ class ScreenSelectDialog extends Dialog {
       _stateSetter?.call(() {});
       return;
     } catch (e) {
-      print(e.toString());
+      debugPrint(e.toString());
     }
   }
 
@@ -199,48 +199,44 @@ class ScreenSelectDialog extends Dialog {
                             height: 2,
                           ),
                           Expanded(
-                            child: Container(
-                              child: TabBarView(children: [
-                                Align(
-                                    alignment: Alignment.center,
-                                    child: GridView.count(
-                                      crossAxisSpacing: 8,
-                                      crossAxisCount: 2,
-                                      children: _sources.entries
-                                          .where((element) => element.value.type == SourceType.Screen)
-                                          .map((e) => ThumbnailWidget(
-                                                onTap: (source) {
-                                                  setState(() {
-                                                    _selectedSource = source;
-                                                  });
-                                                },
-                                                source: e.value,
-                                                selected: _selectedSource?.id == e.value.id,
-                                              ))
-                                          .toList(),
-                                    )),
-                                Align(
-                                    alignment: Alignment.center,
-                                    child: Container(
-                                      child: GridView.count(
-                                        crossAxisSpacing: 8,
-                                        crossAxisCount: 3,
-                                        children: _sources.entries
-                                            .where((element) => element.value.type == SourceType.Window)
-                                            .map((e) => ThumbnailWidget(
-                                                  onTap: (source) {
-                                                    setState(() {
-                                                      _selectedSource = source;
-                                                    });
-                                                  },
-                                                  source: e.value,
-                                                  selected: _selectedSource?.id == e.value.id,
-                                                ))
-                                            .toList(),
-                                      ),
-                                    )),
-                              ]),
-                            ),
+                            child: TabBarView(children: [
+                              Align(
+                                  alignment: Alignment.center,
+                                  child: GridView.count(
+                                    crossAxisSpacing: 8,
+                                    crossAxisCount: 2,
+                                    children: _sources.entries
+                                        .where((element) => element.value.type == SourceType.Screen)
+                                        .map((e) => ThumbnailWidget(
+                                              onTap: (source) {
+                                                setState(() {
+                                                  _selectedSource = source;
+                                                });
+                                              },
+                                              source: e.value,
+                                              selected: _selectedSource?.id == e.value.id,
+                                            ))
+                                        .toList(),
+                                  )),
+                              Align(
+                                  alignment: Alignment.center,
+                                  child: GridView.count(
+                                    crossAxisSpacing: 8,
+                                    crossAxisCount: 3,
+                                    children: _sources.entries
+                                        .where((element) => element.value.type == SourceType.Window)
+                                        .map((e) => ThumbnailWidget(
+                                              onTap: (source) {
+                                                setState(() {
+                                                  _selectedSource = source;
+                                                });
+                                              },
+                                              source: e.value,
+                                              selected: _selectedSource?.id == e.value.id,
+                                            ))
+                                        .toList(),
+                                  )),
+                            ]),
                           )
                         ],
                       ),

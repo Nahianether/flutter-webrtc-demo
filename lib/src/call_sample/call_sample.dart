@@ -80,7 +80,7 @@ class _CallSampleState extends State<CallSample> {
           break;
         case CallState.bye:
           if (_waitAccept) {
-            print('peer reject');
+            debugPrint('peer reject');
             _waitAccept = false;
             Navigator.of(context).pop(false);
           }
@@ -223,11 +223,11 @@ class _CallSampleState extends State<CallSample> {
             }
           });
           stream.getVideoTracks()[0].onEnded = () {
-            print('By adding a listener on onEnded you can: 1) catch stop video sharing on Web');
+            debugPrint('By adding a listener on onEnded you can: 1) catch stop video sharing on Web');
           };
           screenStream = stream;
         } catch (e) {
-          print(e);
+          debugPrint(e.toString());
         }
       }
     } else if (WebRTC.platformIsWeb) {
@@ -264,7 +264,7 @@ class _CallSampleState extends State<CallSample> {
                 tooltip: 'Screen sharing',
               )
             ])),
-        subtitle: Text('${'[' + peer['user_agent']}]'),
+        subtitle: Text('[${peer['user_agent']}]'),
       ),
       const Divider()
     ]);
@@ -313,32 +313,30 @@ class _CallSampleState extends State<CallSample> {
           : null,
       body: _inCalling
           ? OrientationBuilder(builder: (context, orientation) {
-              return Container(
-                child: Stack(children: <Widget>[
-                  Positioned(
-                      left: 0.0,
-                      right: 0.0,
-                      top: 0.0,
-                      bottom: 0.0,
-                      child: Container(
-                        margin: const EdgeInsets.fromLTRB(0.0, 0.0, 0.0, 0.0),
-                        width: MediaQuery.of(context).size.width,
-                        height: MediaQuery.of(context).size.height,
-                        decoration: const BoxDecoration(color: Colors.black54),
-                        child: RTCVideoView(_remoteRenderer),
-                      )),
-                  Positioned(
-                    left: 20.0,
-                    top: 20.0,
+              return Stack(children: <Widget>[
+                Positioned(
+                    left: 0.0,
+                    right: 0.0,
+                    top: 0.0,
+                    bottom: 0.0,
                     child: Container(
-                      width: orientation == Orientation.portrait ? 90.0 : 120.0,
-                      height: orientation == Orientation.portrait ? 120.0 : 90.0,
+                      margin: const EdgeInsets.fromLTRB(0.0, 0.0, 0.0, 0.0),
+                      width: MediaQuery.of(context).size.width,
+                      height: MediaQuery.of(context).size.height,
                       decoration: const BoxDecoration(color: Colors.black54),
-                      child: RTCVideoView(_localRenderer, mirror: true),
-                    ),
+                      child: RTCVideoView(_remoteRenderer),
+                    )),
+                Positioned(
+                  left: 20.0,
+                  top: 20.0,
+                  child: Container(
+                    width: orientation == Orientation.portrait ? 90.0 : 120.0,
+                    height: orientation == Orientation.portrait ? 120.0 : 90.0,
+                    decoration: const BoxDecoration(color: Colors.black54),
+                    child: RTCVideoView(_localRenderer, mirror: true),
                   ),
-                ]),
-              );
+                ),
+              ]);
             })
           : ListView.builder(
               shrinkWrap: true,

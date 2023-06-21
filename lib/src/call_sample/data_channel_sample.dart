@@ -95,7 +95,7 @@ class _DataChannelSampleState extends State<DataChannelSample> {
     _signaling?.onDataChannelMessage = (_, dc, RTCDataChannelMessage data) {
       setState(() {
         if (data.isBinary) {
-          print('Got binary [${data.binary}]');
+          debugPrint('Got binary [${data.binary}]');
         } else {
           _text = data.text;
         }
@@ -125,7 +125,7 @@ class _DataChannelSampleState extends State<DataChannelSample> {
           break;
         case CallState.bye:
           if (_waitAccept) {
-            print('peer reject');
+            debugPrint('peer reject');
             _waitAccept = false;
             Navigator.of(context).pop(false);
           }
@@ -210,7 +210,7 @@ class _DataChannelSampleState extends State<DataChannelSample> {
             Text(self ? peer['name'] + ', ID: ${peer['id']} ' + ' [Your self]' : peer['name'] + ', ID: ${peer['id']} '),
         onTap: () => _invitePeer(context, peer['id']),
         trailing: const Icon(Icons.sms),
-        subtitle: Text('${'[' + peer['user_agent']}]'),
+        subtitle: Text('[${peer['user_agent']}]'),
       ),
       const Divider()
     ]);
@@ -237,11 +237,7 @@ class _DataChannelSampleState extends State<DataChannelSample> {
             )
           : null,
       body: _inCalling
-          ? Center(
-              child: Container(
-                child: Text('Recevied => $_text'),
-              ),
-            )
+          ? Center(child: Text('Recevied => $_text'))
           : ListView.builder(
               shrinkWrap: true,
               padding: const EdgeInsets.all(0.0),
