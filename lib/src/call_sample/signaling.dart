@@ -84,24 +84,20 @@ class Signaling {
   }
 
   void switchCamera() {
-    if (_localStream != null) {
-      if (_videoSource != VideoSource.camera) {
-        for (var sender in _senders) {
-          if (sender.track!.kind == 'video') {
-            sender.replaceTrack(_localStream!.getVideoTracks()[0]);
-          }
-        }
-        _videoSource = VideoSource.camera;
-        onLocalStream?.call(_localStream!);
-      } else {
-        Helper.switchCamera(_localStream!.getVideoTracks()[0]);
+    if (_localStream == null) return;
+    if (_videoSource == VideoSource.camera) Helper.switchCamera(_localStream!.getVideoTracks()[0]);
+    for (var sender in _senders) {
+      if (sender.track!.kind == 'video') {
+        sender.replaceTrack(_localStream!.getVideoTracks()[0]);
       }
     }
+    _videoSource = VideoSource.camera;
+    onLocalStream?.call(_localStream!);
   }
 
   void switchToScreenSharing(MediaStream stream) {
     if (_localStream != null && _videoSource != VideoSource.screen) {
-      for (var sender in _senders) {
+      for (final sender in _senders) {
         if (sender.track!.kind == 'video') {
           sender.replaceTrack(stream.getVideoTracks()[0]);
         }
@@ -112,34 +108,26 @@ class Signaling {
   }
 
   void muteMic() {
-    if (_localStream != null) {
-      bool enabled = _localStream!.getAudioTracks()[0].enabled;
-      _localStream!.getAudioTracks()[0].enabled = !enabled;
-    }
+    if (_localStream == null) return;
+    bool enabled = _localStream!.getAudioTracks()[0].enabled;
+    _localStream!.getAudioTracks()[0].enabled = !enabled;
   }
 
   void invite(String peerId, String media, bool useScreen) async {
-    var sessionId = '$_selfId-$peerId';
+    final sessionId = '$_selfId-$peerId';
     Session session =
         await _createSession(null, peerId: peerId, sessionId: sessionId, media: media, screenSharing: useScreen);
     _sessions[sessionId] = session;
-    if (media == 'data') {
-      _createDataChannel(session);
-    }
+    if (media == 'data') _createDataChannel(session);
     _createOffer(session, media);
     onCallStateChange?.call(session, CallState.newCall);
     onCallStateChange?.call(session, CallState.invite);
   }
 
   void bye(String sessionId) {
-    _send('bye', {
-      'session_id': sessionId,
-      'from': _selfId,
-    });
+    _send('bye', {'session_id': sessionId, 'from': _selfId});
     var sess = _sessions[sessionId];
-    if (sess != null) {
-      _closeSession(sess);
-    }
+    if (sess != null) _closeSession(sess);
   }
 
   void accept(String sessionId, String media) {
@@ -150,20 +138,18 @@ class Signaling {
 
   void reject(String sessionId) {
     final session = _sessions[sessionId];
-    if (session == null) {
-      return;
-    }
+    if (session == null) return;
     bye(session.sid);
   }
 
   void onMessage(message) async {
     final mapData = message as Map<String, dynamic>;
-    var data = mapData['data'];
+    final data = mapData['data'];
 
     switch (mapData['type']) {
       case 'peers':
         {
-          List<dynamic> peers = data;
+          final peers = data as List<dynamic>;
           if (onPeersUpdate != null) {
             final event = <String, dynamic>{};
             event['self'] = _selfId;
@@ -343,7 +329,7 @@ class Signaling {
     final newSession = session ?? Session(sid: sessionId, pid: peerId);
     if (media != 'data') _localStream = await createStream(media, screenSharing, context: _context);
     debugPrint(_iceServers.toString());
-    RTCPeerConnection pc = await createPeerConnection({
+    final pc = await createPeerConnection({
       ..._iceServers,
       ...{'sdpSemantics': sdpSemantics}
     }, _config);
@@ -373,18 +359,17 @@ class Signaling {
       // This delay is needed to allow enough time to try an ICE candidate
       // before skipping to the next one. 1 second is just an heuristic value
       // and should be thoroughly tested in your own environment.
-      await Future.delayed(
-          const Duration(seconds: 1),
-          () => _send('candidate', {
-                'to': peerId,
-                'from': _selfId,
-                'candidate': {
-                  'sdpMLineIndex': candidate.sdpMLineIndex,
-                  'sdpMid': candidate.sdpMid,
-                  'candidate': candidate.candidate,
-                },
-                'session_id': sessionId,
-              }));
+      await Future.delayed(const Duration(seconds: 1));
+      _send('candidate', {
+        'to': peerId,
+        'from': _selfId,
+        'candidate': {
+          'sdpMLineIndex': candidate.sdpMLineIndex,
+          'sdpMid': candidate.sdpMid,
+          'candidate': candidate.candidate,
+        },
+        'session_id': sessionId,
+      });
     };
 
     pc.onDataChannel = (channel) => _addDataChannel(newSession, channel);
@@ -409,14 +394,14 @@ class Signaling {
   }
 
   Future<void> _createDataChannel(Session session, {label = 'fileTransfer'}) async {
-    RTCDataChannelInit dataChannelDict = RTCDataChannelInit()..maxRetransmits = 30;
-    RTCDataChannel channel = await session.pc!.createDataChannel(label, dataChannelDict);
+    final dataChannelDict = RTCDataChannelInit()..maxRetransmits = 30;
+    final channel = await session.pc!.createDataChannel(label, dataChannelDict);
     _addDataChannel(session, channel);
   }
 
   Future<void> _createOffer(Session session, String media) async {
     try {
-      RTCSessionDescription s = await session.pc!.createOffer(media == 'data' ? _dcConstraints : {});
+      final s = await session.pc!.createOffer(media == 'data' ? _dcConstraints : {});
       await session.pc!.setLocalDescription(_fixSdp(s));
       _send('offer', {
         'from': _selfId,
@@ -431,14 +416,14 @@ class Signaling {
   }
 
   RTCSessionDescription _fixSdp(RTCSessionDescription s) {
-    var sdp = s.sdp;
+    final sdp = s.sdp;
     s.sdp = sdp!.replaceAll('profile-level-id=640c1f', 'profile-level-id=42e032');
     return s;
   }
 
   Future<void> _createAnswer(Session session, String media) async {
     try {
-      RTCSessionDescription s = await session.pc!.createAnswer(media == 'data' ? _dcConstraints : {});
+      final s = await session.pc!.createAnswer(media == 'data' ? _dcConstraints : {});
       await session.pc!.setLocalDescription(_fixSdp(s));
       _send('answer', {
         'to': session.pid,
@@ -452,7 +437,7 @@ class Signaling {
   }
 
   _send(event, data) {
-    var request = {};
+    final request = {};
     request['type'] = event;
     request['data'] = data;
     _socket?.send(_encoder.convert(request));
@@ -460,9 +445,7 @@ class Signaling {
 
   Future<void> _cleanSessions() async {
     if (_localStream != null) {
-      _localStream!.getTracks().forEach((element) async {
-        await element.stop();
-      });
+      _localStream!.getTracks().forEach((v) async => await v.stop());
       await _localStream!.dispose();
       _localStream = null;
     }
@@ -485,12 +468,9 @@ class Signaling {
   }
 
   Future<void> _closeSession(Session session) async {
-    _localStream?.getTracks().forEach((element) async {
-      await element.stop();
-    });
+    _localStream?.getTracks().forEach((v) async => await v.stop());
     await _localStream?.dispose();
     _localStream = null;
-
     await session.pc?.close();
     await session.dc?.close();
     _senders.clear();
