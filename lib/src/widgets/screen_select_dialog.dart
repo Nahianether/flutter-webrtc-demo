@@ -11,10 +11,10 @@ class ThumbnailWidget extends StatefulWidget {
   final Function(DesktopCapturerSource) onTap;
 
   @override
-  _ThumbnailWidgetState createState() => _ThumbnailWidgetState();
+  ThumbnailWidgetState createState() => ThumbnailWidgetState();
 }
 
-class _ThumbnailWidgetState extends State<ThumbnailWidget> {
+class ThumbnailWidgetState extends State<ThumbnailWidget> {
   final List<StreamSubscription> _subscriptions = [];
 
   @override

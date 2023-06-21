@@ -12,10 +12,10 @@ class CallSample extends StatefulWidget {
   const CallSample({super.key, required this.host});
 
   @override
-  _CallSampleState createState() => _CallSampleState();
+  CallSampleState createState() => CallSampleState();
 }
 
-class _CallSampleState extends State<CallSample> {
+class CallSampleState extends State<CallSample> {
   Signaling? _signaling;
   List<dynamic> _peers = [];
   String? _selfId;
@@ -27,7 +27,7 @@ class _CallSampleState extends State<CallSample> {
   bool _waitAccept = false;
 
   // ignore: unused_element
-  _CallSampleState();
+  CallSampleState();
 
   @override
   initState() {

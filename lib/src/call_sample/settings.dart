@@ -7,10 +7,10 @@ class CallSettings extends StatefulWidget {
   const CallSettings({super.key});
 
   @override
-  _CallSettingsState createState() => _CallSettingsState();
+  CallSettingsState createState() => CallSettingsState();
 }
 
-class _CallSettingsState extends State<CallSettings> {
+class CallSettingsState extends State<CallSettings> {
   @override
   initState() {
     super.initState();

@@ -1,9 +1,10 @@
-import 'package:flutter/material.dart';
-import 'dart:core';
 import 'dart:async';
-import 'dart:typed_data';
-import 'signaling.dart';
+import 'dart:core';
+
+import 'package:flutter/material.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
+
+import 'signaling.dart';
 
 TextEditingController _textEditingController = TextEditingController();
 
@@ -13,10 +14,10 @@ class DataChannelSample extends StatefulWidget {
   const DataChannelSample({super.key, required this.host});
 
   @override
-  _DataChannelSampleState createState() => _DataChannelSampleState();
+  DataChannelSampleState createState() => DataChannelSampleState();
 }
 
-class _DataChannelSampleState extends State<DataChannelSample> {
+class DataChannelSampleState extends State<DataChannelSample> {
   Signaling? _signaling;
   List<dynamic> _peers = [];
   String? _selfId;
@@ -26,7 +27,7 @@ class _DataChannelSampleState extends State<DataChannelSample> {
   Timer? _timer;
   var _text = '';
   // ignore: unused_element
-  _DataChannelSampleState();
+  DataChannelSampleState();
   bool _waitAccept = false;
 
   @override
@@ -243,14 +244,18 @@ class _DataChannelSampleState extends State<DataChannelSample> {
       body: _inCalling
           ? Column(
               children: [
-                Container(
-                  child: Text(_text),
+                SizedBox(
+                  height: 200,
+                  width: double.infinity,
+                  child: Card(
+                    child: Text(_text),
+                  ),
                 ),
                 SizedBox(
-                  height: 80,
+                  height: 60,
                   width: double.infinity,
                   child: TextFormField(
-                    maxLines: 3,
+                    maxLines: 2,
                     controller: _textEditingController,
                     decoration: const InputDecoration(
                       border: OutlineInputBorder(),
@@ -260,7 +265,7 @@ class _DataChannelSampleState extends State<DataChannelSample> {
                 ),
                 IconButton(
                   icon: const Icon(Icons.send),
-                  onPressed: () {
+                  onPressed: () async {
                     _handleDataChannelTest(_textEditingController.text);
                     _textEditingController.clear();
                   },
