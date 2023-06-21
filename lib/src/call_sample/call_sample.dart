@@ -50,7 +50,8 @@ class _CallSampleState extends State<CallSample> {
   }
 
   void _connect(BuildContext context) async {
-    _signaling ??= Signaling(widget.host, context)..connect();
+    _signaling ??= Signaling(widget.host, context);
+    await _signaling!.connect();
     _signaling?.onSignalingStateChange = (SignalState state) {
       switch (state) {
         case SignalState.closed:
