@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-Future<Map> getTurnCredential(String host, int port) async {
+Future<Map<dynamic, dynamic>> getTurnCredential(String host, int port) async {
   HttpClient client = HttpClient(context: SecurityContext());
   client.badCertificateCallback = (X509Certificate cert, String host, int port) {
     print('getTurnCredential: Allow self-signed certificate => $host:$port. ');
@@ -13,6 +13,5 @@ Future<Map> getTurnCredential(String host, int port) async {
   var response = await request.close();
   var responseBody = await response.transform(const Utf8Decoder()).join();
   print('getTurnCredential:response => $responseBody.');
-  Map data = const JsonDecoder().convert(responseBody);
-  return data;
+  return const JsonDecoder().convert(responseBody);
 }

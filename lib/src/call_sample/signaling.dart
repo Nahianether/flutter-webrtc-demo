@@ -34,26 +34,26 @@ class Signaling {
 
   final _encoder = const JsonEncoder();
   final _decoder = const JsonDecoder();
-  final String _selfId = randomNumeric(6);
-  SimpleWebSocket? _socket;
+  final _sessions = <String, Session>{};
+  final _remoteStreams = <MediaStream>[];
+  final _senders = <RTCRtpSender>[];
+  final _selfId = randomNumeric(6);
   final _port = 8086;
-  var _turnCredential;
-  final Map<String, Session> _sessions = {};
+  var _videoSource = VideoSource.camera;
+  var _turnCredential = {};
   MediaStream? _localStream;
-  final List<MediaStream> _remoteStreams = <MediaStream>[];
-  final List<RTCRtpSender> _senders = <RTCRtpSender>[];
-  VideoSource _videoSource = VideoSource.camera;
+  SimpleWebSocket? _socket;
 
-  Function(SignalState state)? onSignalingStateChange;
-  Function(Session session, CallState state)? onCallStateChange;
+  Function(dynamic event)? onPeersUpdate;
   Function(MediaStream stream)? onLocalStream;
+  Function(SignalState state)? onSignalingStateChange;
+  Function(Session session, RTCDataChannel dc)? onDataChannel;
+  Function(Session session, CallState state)? onCallStateChange;
   Function(Session session, MediaStream stream)? onAddRemoteStream;
   Function(Session session, MediaStream stream)? onRemoveRemoteStream;
-  Function(dynamic event)? onPeersUpdate;
   Function(Session session, RTCDataChannel dc, RTCDataChannelMessage data)? onDataChannelMessage;
-  Function(Session session, RTCDataChannel dc)? onDataChannel;
 
-  String get sdpSemantics => 'unified-plan';
+  final sdpSemantics = 'unified-plan';
 
   Map<String, dynamic> _iceServers = {
     'iceServers': [
@@ -194,9 +194,9 @@ class Signaling {
           // await _createAnswer(newSession, media);
 
           if (newSession.remoteCandidates.isNotEmpty) {
-            newSession.remoteCandidates.forEach((candidate) async {
+            for (final candidate in newSession.remoteCandidates) {
               await newSession.pc?.addCandidate(candidate);
-            });
+            }
             newSession.remoteCandidates.clear();
           }
           onCallStateChange?.call(newSession, CallState.newCall);
@@ -241,7 +241,7 @@ class Signaling {
       case 'bye':
         {
           var sessionId = data['session_id'];
-          print('bye: ' + sessionId);
+          debugPrint('bye: $sessionId');
           var session = _sessions.remove(sessionId);
           if (session != null) {
             onCallStateChange?.call(session, CallState.bye);
@@ -251,7 +251,7 @@ class Signaling {
         break;
       case 'keepalive':
         {
-          print('keepalive response!');
+          debugPrint('keepalive response!');
         }
         break;
       default:
@@ -263,18 +263,11 @@ class Signaling {
     var url = 'https://$_host:$_port/ws';
     _socket = SimpleWebSocket(url);
 
-    print('connect to $url');
+    debugPrint('connect to $url');
 
-    if (_turnCredential == null) {
+    if (_turnCredential.isEmpty) {
       try {
         _turnCredential = await getTurnCredential(_host, _port);
-        /*{
-            "username": "1584195784:mbzrxpgjys",
-            "password": "isyl6FF6nqMTB9/ig5MrMRUXqZg",
-            "ttl": 86400,
-            "uris": ["turn:127.0.0.1:19302?transport=udp"]
-          }
-        */
         _iceServers = {
           'iceServers': [
             {
@@ -284,22 +277,24 @@ class Signaling {
             },
           ]
         };
-      } catch (e) {}
+      } catch (e) {
+        debugPrint('get turn credential failed: $e');
+      }
     }
 
     _socket?.onOpen = () {
-      print('onOpen');
+      debugPrint('onOpen');
       onSignalingStateChange?.call(SignalState.open);
       _send('new', {'name': DeviceInfo.label, 'id': _selfId, 'user_agent': DeviceInfo.userAgent});
     };
 
     _socket?.onMessage = (message) {
-      print('Received data: ' + message);
+      debugPrint('Received data: $message');
       onMessage(_decoder.convert(message));
     };
 
     _socket?.onClose = (int? code, String? reason) {
-      print('Closed by server [$code => $reason]!');
+      debugPrint('Closed by server [$code => $reason]!');
       onSignalingStateChange?.call(SignalState.closed);
     };
 
@@ -356,7 +351,7 @@ class Signaling {
   }) async {
     var newSession = session ?? Session(sid: sessionId, pid: peerId);
     if (media != 'data') _localStream = await createStream(media, screenSharing, context: _context);
-    print(_iceServers);
+    debugPrint(_iceServers.toString());
     RTCPeerConnection pc = await createPeerConnection({
       ..._iceServers,
       ...{'sdpSemantics': sdpSemantics}
@@ -429,7 +424,7 @@ class Signaling {
     }
     pc.onIceCandidate = (candidate) async {
       // if (candidate == null) {
-      //   print('onIceCandidate: complete!');
+      //   debugPrint('onIceCandidate: complete!');
       //   return;
       // }
       // This delay is needed to allow enough time to try an ICE candidate
@@ -493,7 +488,7 @@ class Signaling {
         'media': media,
       });
     } catch (e) {
-      print(e.toString());
+      debugPrint(e.toString());
     }
   }
 
@@ -514,7 +509,7 @@ class Signaling {
         'session_id': session.sid,
       });
     } catch (e) {
-      print(e.toString());
+      debugPrint(e.toString());
     }
   }
 
