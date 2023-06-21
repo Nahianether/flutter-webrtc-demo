@@ -12,34 +12,30 @@ import '../utils/turn.dart' if (dart.library.js) '../utils/turn_web.dart';
 
 enum VideoSource { camera, screen }
 
-enum SignalingState { connectionOpen, connectionClosed, connectionError }
+enum SignalState { open, closed, error }
 
-enum CallState {
-  callStateNew,
-  callStateRinging,
-  callStateInvite,
-  callStateConnected,
-  callStateBye,
-}
+enum CallState { newCall, ringing, invite, connected, bye }
 
 class Session {
   Session({required this.sid, required this.pid});
+
   String pid;
   String sid;
-  RTCPeerConnection? pc;
   RTCDataChannel? dc;
-  List<RTCIceCandidate> remoteCandidates = [];
+  RTCPeerConnection? pc;
+  final remoteCandidates = <RTCIceCandidate>[];
 }
 
 class Signaling {
   Signaling(this._host, this._context);
 
-  final JsonEncoder _encoder = const JsonEncoder();
-  final JsonDecoder _decoder = const JsonDecoder();
+  final BuildContext _context;
+  final String _host;
+
+  final _encoder = const JsonEncoder();
+  final _decoder = const JsonDecoder();
   final String _selfId = randomNumeric(6);
   SimpleWebSocket? _socket;
-  final BuildContext? _context;
-  final _host;
   final _port = 8086;
   var _turnCredential;
   final Map<String, Session> _sessions = {};
@@ -48,7 +44,7 @@ class Signaling {
   final List<RTCRtpSender> _senders = <RTCRtpSender>[];
   VideoSource _videoSource = VideoSource.camera;
 
-  Function(SignalingState state)? onSignalingStateChange;
+  Function(SignalState state)? onSignalingStateChange;
   Function(Session session, CallState state)? onCallStateChange;
   Function(MediaStream stream)? onLocalStream;
   Function(Session session, MediaStream stream)? onAddRemoteStream;
@@ -137,8 +133,8 @@ class Signaling {
       _createDataChannel(session);
     }
     _createOffer(session, media);
-    onCallStateChange?.call(session, CallState.callStateNew);
-    onCallStateChange?.call(session, CallState.callStateInvite);
+    onCallStateChange?.call(session, CallState.newCall);
+    onCallStateChange?.call(session, CallState.invite);
   }
 
   void bye(String sessionId) {
@@ -203,8 +199,8 @@ class Signaling {
             });
             newSession.remoteCandidates.clear();
           }
-          onCallStateChange?.call(newSession, CallState.callStateNew);
-          onCallStateChange?.call(newSession, CallState.callStateRinging);
+          onCallStateChange?.call(newSession, CallState.newCall);
+          onCallStateChange?.call(newSession, CallState.ringing);
         }
         break;
       case 'answer':
@@ -213,7 +209,7 @@ class Signaling {
           var sessionId = data['session_id'];
           var session = _sessions[sessionId];
           session?.pc?.setRemoteDescription(RTCSessionDescription(description['sdp'], description['type']));
-          onCallStateChange?.call(session!, CallState.callStateConnected);
+          onCallStateChange?.call(session!, CallState.connected);
         }
         break;
       case 'candidate':
@@ -248,7 +244,7 @@ class Signaling {
           print('bye: ' + sessionId);
           var session = _sessions.remove(sessionId);
           if (session != null) {
-            onCallStateChange?.call(session, CallState.callStateBye);
+            onCallStateChange?.call(session, CallState.bye);
             _closeSession(session);
           }
         }
@@ -293,7 +289,7 @@ class Signaling {
 
     _socket?.onOpen = () {
       print('onOpen');
-      onSignalingStateChange?.call(SignalingState.connectionOpen);
+      onSignalingStateChange?.call(SignalState.open);
       _send('new', {'name': DeviceInfo.label, 'id': _selfId, 'user_agent': DeviceInfo.userAgent});
     };
 
@@ -304,7 +300,7 @@ class Signaling {
 
     _socket?.onClose = (int? code, String? reason) {
       print('Closed by server [$code => $reason]!');
-      onSignalingStateChange?.call(SignalingState.connectionClosed);
+      onSignalingStateChange?.call(SignalState.closed);
     };
 
     await _socket?.connect();
@@ -552,7 +548,7 @@ class Signaling {
       return peerId == ids[0] || peerId == ids[1];
     });
     _closeSession(session);
-    onCallStateChange?.call(session, CallState.callStateBye);
+    onCallStateChange?.call(session, CallState.bye);
   }
 
   Future<void> _closeSession(Session session) async {

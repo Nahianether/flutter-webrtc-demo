@@ -51,23 +51,23 @@ class _CallSampleState extends State<CallSample> {
 
   void _connect(BuildContext context) async {
     _signaling ??= Signaling(widget.host, context)..connect();
-    _signaling?.onSignalingStateChange = (SignalingState state) {
+    _signaling?.onSignalingStateChange = (SignalState state) {
       switch (state) {
-        case SignalingState.connectionClosed:
-        case SignalingState.connectionError:
-        case SignalingState.connectionOpen:
+        case SignalState.closed:
+        case SignalState.error:
+        case SignalState.open:
           break;
       }
     };
 
     _signaling?.onCallStateChange = (Session session, CallState state) async {
       switch (state) {
-        case CallState.callStateNew:
+        case CallState.newCall:
           setState(() {
             _session = session;
           });
           break;
-        case CallState.callStateRinging:
+        case CallState.ringing:
           bool? accept = await _showAcceptDialog();
           if (accept!) {
             _accept();
@@ -78,7 +78,7 @@ class _CallSampleState extends State<CallSample> {
             _reject();
           }
           break;
-        case CallState.callStateBye:
+        case CallState.bye:
           if (_waitAccept) {
             print('peer reject');
             _waitAccept = false;
@@ -91,11 +91,11 @@ class _CallSampleState extends State<CallSample> {
             _session = null;
           });
           break;
-        case CallState.callStateInvite:
+        case CallState.invite:
           _waitAccept = true;
           _showInvateDialog();
           break;
-        case CallState.callStateConnected:
+        case CallState.connected:
           if (_waitAccept) {
             _waitAccept = false;
             Navigator.of(context).pop(false);
