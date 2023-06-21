@@ -5,6 +5,8 @@ import 'dart:typed_data';
 import 'signaling.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 
+TextEditingController _textEditingController = TextEditingController();
+
 class DataChannelSample extends StatefulWidget {
   static String tag = 'call_sample';
   final String host;
@@ -121,7 +123,7 @@ class _DataChannelSampleState extends State<DataChannelSample> {
           setState(() {
             _session = session;
           });
-          _timer = Timer.periodic(const Duration(seconds: 1), _handleDataChannelTest);
+          // _timer = Timer.periodic(const Duration(seconds: 1), _handleDataChannelTest);
           break;
         case CallState.bye:
           if (_waitAccept) {
@@ -174,9 +176,9 @@ class _DataChannelSampleState extends State<DataChannelSample> {
     });
   }
 
-  _handleDataChannelTest(Timer timer) async {
-    String text = 'Say hello ${timer.tick} times, from [$_selfId]';
-    _dataChannel?.send(RTCDataChannelMessage.fromBinary(Uint8List(timer.tick + 1)));
+  _handleDataChannelTest(String text) async {
+    // String text = 'Say hello ${timer.tick} times, from [$_selfId]';
+    // _dataChannel?.send(RTCDataChannelMessage.fromBinary(Uint8List(timer.tick + 1)));
     _dataChannel?.send(RTCDataChannelMessage(text));
   }
 
@@ -206,8 +208,9 @@ class _DataChannelSampleState extends State<DataChannelSample> {
     var self = (peer['id'] == _selfId);
     return ListBody(children: <Widget>[
       ListTile(
-        title:
-            Text(self ? peer['name'] + ', ID: ${peer['id']} ' + ' [Your self]' : peer['name'] + ', ID: ${peer['id']} '),
+        title: Text(self
+            ? peer['name'] + ', ID: ${peer['id']} ' + ' [Your self]'
+            : peer['name'] + ', ID: ${peer['id']} '),
         onTap: () => _invitePeer(context, peer['id']),
         trailing: const Icon(Icons.sms),
         subtitle: Text('[${peer['user_agent']}]'),
@@ -220,7 +223,8 @@ class _DataChannelSampleState extends State<DataChannelSample> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Data Channel Sample${_selfId != null ? ' [Your ID ($_selfId)] ' : ''}'),
+        title: Text(
+            'Data Channel Sample${_selfId != null ? ' [Your ID ($_selfId)] ' : ''}'),
         actions: const <Widget>[
           IconButton(
             icon: Icon(Icons.settings),
@@ -237,7 +241,32 @@ class _DataChannelSampleState extends State<DataChannelSample> {
             )
           : null,
       body: _inCalling
-          ? Center(child: Text('Recevied => $_text'))
+          ? Column(
+              children: [
+                Container(
+                  child: Text(_text),
+                ),
+                SizedBox(
+                  height: 80,
+                  width: double.infinity,
+                  child: TextFormField(
+                    maxLines: 3,
+                    controller: _textEditingController,
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                      labelText: 'Message',
+                    ),
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.send),
+                  onPressed: () {
+                    _handleDataChannelTest(_textEditingController.text);
+                    _textEditingController.clear();
+                  },
+                ),
+              ],
+            )
           : ListView.builder(
               shrinkWrap: true,
               padding: const EdgeInsets.all(0.0),

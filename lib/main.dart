@@ -73,7 +73,8 @@ class _MyAppState extends State<MyApp> {
     });
   }
 
-  void showDemoDialog<T>({required BuildContext context, required Widget child}) {
+  void showDemoDialog<T>(
+      {required BuildContext context, required Widget child}) {
     showDialog<T>(
       context: context,
       builder: (BuildContext context) => child,
@@ -85,8 +86,9 @@ class _MyAppState extends State<MyApp> {
           Navigator.push(
               context,
               MaterialPageRoute(
-                  builder: (BuildContext context) =>
-                      _datachannel ? DataChannelSample(host: _server) : CallSample(host: _server)));
+                  builder: (BuildContext context) => _datachannel
+                      ? DataChannelSample(host: _server)
+                      : CallSample(host: _server)));
         }
       }
     });
