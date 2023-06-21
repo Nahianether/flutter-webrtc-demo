@@ -165,7 +165,7 @@ class Signaling {
         {
           List<dynamic> peers = data;
           if (onPeersUpdate != null) {
-            Map<String, dynamic> event = <String, dynamic>{};
+            final event = <String, dynamic>{};
             event['self'] = _selfId;
             event['peers'] = peers;
             onPeersUpdate?.call(event);
@@ -174,12 +174,12 @@ class Signaling {
         break;
       case 'offer':
         {
-          var peerId = data['from'];
-          var description = data['description'];
-          var media = data['media'];
-          var sessionId = data['session_id'];
-          var session = _sessions[sessionId];
-          var newSession =
+          final peerId = data['from'];
+          final description = data['description'];
+          final media = data['media'];
+          final sessionId = data['session_id'];
+          final session = _sessions[sessionId];
+          final newSession =
               await _createSession(session, peerId: peerId, sessionId: sessionId, media: media, screenSharing: false);
           _sessions[sessionId] = newSession;
           await newSession.pc?.setRemoteDescription(RTCSessionDescription(description['sdp'], description['type']));
@@ -197,20 +197,20 @@ class Signaling {
         break;
       case 'answer':
         {
-          var description = data['description'];
-          var sessionId = data['session_id'];
-          var session = _sessions[sessionId];
+          final description = data['description'];
+          final sessionId = data['session_id'];
+          final session = _sessions[sessionId];
           session?.pc?.setRemoteDescription(RTCSessionDescription(description['sdp'], description['type']));
           onCallStateChange?.call(session!, CallState.connected);
         }
         break;
       case 'candidate':
         {
-          var peerId = data['from'];
-          var candidateMap = data['candidate'];
-          var sessionId = data['session_id'];
-          var session = _sessions[sessionId];
-          RTCIceCandidate candidate =
+          final peerId = data['from'];
+          final candidateMap = data['candidate'];
+          final sessionId = data['session_id'];
+          final session = _sessions[sessionId];
+          final candidate =
               RTCIceCandidate(candidateMap['candidate'], candidateMap['sdpMid'], candidateMap['sdpMLineIndex']);
 
           if (session != null) {
@@ -226,19 +226,18 @@ class Signaling {
         break;
       case 'leave':
         {
-          var peerId = data as String;
+          final peerId = data as String;
           _closeSessionByPeerId(peerId);
         }
         break;
       case 'bye':
         {
-          var sessionId = data['session_id'];
+          final sessionId = data['session_id'];
           debugPrint('bye: $sessionId');
-          var session = _sessions.remove(sessionId);
-          if (session != null) {
-            onCallStateChange?.call(session, CallState.bye);
-            _closeSession(session);
-          }
+          final session = _sessions.remove(sessionId);
+          if (session == null) return;
+          onCallStateChange?.call(session, CallState.bye);
+          _closeSession(session);
         }
         break;
       case 'keepalive':
