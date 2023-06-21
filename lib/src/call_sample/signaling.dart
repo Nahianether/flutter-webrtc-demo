@@ -39,8 +39,10 @@ class Signaling {
   final _senders = <RTCRtpSender>[];
   final _selfId = randomNumeric(6);
   final _port = 8086;
+
   var _videoSource = VideoSource.camera;
   var _turnCredential = {};
+
   MediaStream? _localStream;
   SimpleWebSocket? _socket;
 
@@ -58,14 +60,6 @@ class Signaling {
   Map<String, dynamic> _iceServers = {
     'iceServers': [
       {'url': 'stun:stun.l.google.com:19302'},
-      /*
-       * turn server configuration example.
-      {
-        'url': 'turn:123.45.67.89:3478',
-        'username': 'change_to_real_user',
-        'credential': 'change_to_real_secret'
-      },
-      */
     ]
   };
 
@@ -149,15 +143,13 @@ class Signaling {
   }
 
   void accept(String sessionId, String media) {
-    var session = _sessions[sessionId];
-    if (session == null) {
-      return;
-    }
+    final session = _sessions[sessionId];
+    if (session == null) return;
     _createAnswer(session, media);
   }
 
   void reject(String sessionId) {
-    var session = _sessions[sessionId];
+    final session = _sessions[sessionId];
     if (session == null) {
       return;
     }
@@ -165,7 +157,7 @@ class Signaling {
   }
 
   void onMessage(message) async {
-    Map<String, dynamic> mapData = message;
+    final mapData = message as Map<String, dynamic>;
     var data = mapData['data'];
 
     switch (mapData['type']) {
@@ -260,7 +252,7 @@ class Signaling {
   }
 
   Future<void> connect() async {
-    var url = 'https://$_host:$_port/ws';
+    final url = 'https://$_host:$_port/ws';
     _socket = SimpleWebSocket(url);
 
     debugPrint('connect to $url');
@@ -308,7 +300,7 @@ class Signaling {
           ? true
           : {
               'mandatory': {
-                'minWidth': '640', // Provide your own width, height and frame rate here
+                'minWidth': '640', // Provide custom width, height and frame rate
                 'minHeight': '480',
                 'minFrameRate': '30',
               },
@@ -344,12 +336,12 @@ class Signaling {
 
   Future<Session> _createSession(
     Session? session, {
+    required String media,
     required String peerId,
     required String sessionId,
-    required String media,
     required bool screenSharing,
   }) async {
-    var newSession = session ?? Session(sid: sessionId, pid: peerId);
+    final newSession = session ?? Session(sid: sessionId, pid: peerId);
     if (media != 'data') _localStream = await createStream(media, screenSharing, context: _context);
     debugPrint(_iceServers.toString());
     RTCPeerConnection pc = await createPeerConnection({
@@ -377,56 +369,8 @@ class Signaling {
           });
           break;
       }
-
-      // Unified-Plan: Simuclast
-      /*
-      await pc.addTransceiver(
-        track: _localStream.getAudioTracks()[0],
-        init: RTCRtpTransceiverInit(
-            direction: TransceiverDirection.SendOnly, streams: [_localStream]),
-      );
-
-      await pc.addTransceiver(
-        track: _localStream.getVideoTracks()[0],
-        init: RTCRtpTransceiverInit(
-            direction: TransceiverDirection.SendOnly,
-            streams: [
-              _localStream
-            ],
-            sendEncodings: [
-              RTCRtpEncoding(rid: 'f', active: true),
-              RTCRtpEncoding(
-                rid: 'h',
-                active: true,
-                scaleResolutionDownBy: 2.0,
-                maxBitrate: 150000,
-              ),
-              RTCRtpEncoding(
-                rid: 'q',
-                active: true,
-                scaleResolutionDownBy: 4.0,
-                maxBitrate: 100000,
-              ),
-            ]),
-      );*/
-      /*
-        var sender = pc.getSenders().find(s => s.track.kind == "video");
-        var parameters = sender.getParameters();
-        if(!parameters)
-          parameters = {};
-        parameters.encodings = [
-          { rid: "h", active: true, maxBitrate: 900000 },
-          { rid: "m", active: true, maxBitrate: 300000, scaleResolutionDownBy: 2 },
-          { rid: "l", active: true, maxBitrate: 100000, scaleResolutionDownBy: 4 }
-        ];
-        sender.setParameters(parameters);
-      */
     }
     pc.onIceCandidate = (candidate) async {
-      // if (candidate == null) {
-      //   debugPrint('onIceCandidate: complete!');
-      //   return;
-      // }
       // This delay is needed to allow enough time to try an ICE candidate
       // before skipping to the next one. 1 second is just an heuristic value
       // and should be thoroughly tested in your own environment.
@@ -444,21 +388,16 @@ class Signaling {
               }));
     };
 
+    pc.onDataChannel = (channel) => _addDataChannel(newSession, channel);
+
     pc.onIceConnectionState = (state) {};
 
     pc.onRemoveStream = (stream) {
       onRemoveRemoteStream?.call(newSession, stream);
-      _remoteStreams.removeWhere((it) {
-        return (it.id == stream.id);
-      });
+      _remoteStreams.removeWhere((it) => (it.id == stream.id));
     };
 
-    pc.onDataChannel = (channel) {
-      _addDataChannel(newSession, channel);
-    };
-
-    newSession.pc = pc;
-    return newSession;
+    return newSession..pc = pc;
   }
 
   void _addDataChannel(Session session, RTCDataChannel channel) {
@@ -481,8 +420,8 @@ class Signaling {
       RTCSessionDescription s = await session.pc!.createOffer(media == 'data' ? _dcConstraints : {});
       await session.pc!.setLocalDescription(_fixSdp(s));
       _send('offer', {
-        'to': session.pid,
         'from': _selfId,
+        'to': session.pid,
         'description': {'sdp': s.sdp, 'type': s.type},
         'session_id': session.sid,
         'media': media,
