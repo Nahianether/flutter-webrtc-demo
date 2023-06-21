@@ -63,14 +63,14 @@ class Signaling {
     ]
   };
 
-  final Map<String, dynamic> _config = {
+  final _config = {
     'mandatory': {},
     'optional': [
       {'DtlsSrtpKeyAgreement': true},
     ]
   };
 
-  final Map<String, dynamic> _dcConstraints = {
+  final _dcConstraints = {
     'mandatory': {
       'OfferToReceiveAudio': false,
       'OfferToReceiveVideo': false,
@@ -78,7 +78,7 @@ class Signaling {
     'optional': [],
   };
 
-  close() async {
+  void close() async {
     await _cleanSessions();
     _socket?.close();
   }
